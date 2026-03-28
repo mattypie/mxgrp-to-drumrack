@@ -1,0 +1,101 @@
+# mxgrp-to-drumrack
+
+Maschine Expansion Kit (.mxgrp) to Ableton Live 12 Drum Rack (.adg) batch converter.
+
+Converts all Native Instruments Maschine Expansion Pack drum kits into Ableton Live Drum Rack presets with browser previews.
+
+## Features
+
+- Batch converts all `.mxgrp` kits across all Expansions
+- Generates Ableton Live 12 compatible `.adg` files (gzipped XML)
+- Copies `.ogg` preview files for Ableton browser preview playback
+- Incremental updates (only converts new/modified kits)
+- Auto-detects Ableton template location
+- No external dependencies (Python standard library only)
+
+## Requirements
+
+- Python 3.6+
+- Ableton Live 12 with **Drum Essentials** Pack installed (free, used as template)
+- Native Instruments Maschine Expansion Packs
+
+## Usage
+
+```bash
+# Basic usage (auto-detect template, output to NI Library subfolder)
+python mxgrp_to_drumrack.py "D:\Native Instruments Library"
+
+# Specify output folder
+python mxgrp_to_drumrack.py "D:\Native Instruments Library" "D:\NI Drum Racks"
+
+# Force regenerate all
+python mxgrp_to_drumrack.py "D:\Native Instruments Library" "D:\NI Drum Racks" --force
+
+# Specify template manually
+python mxgrp_to_drumrack.py "D:\Native Instruments Library" --template "path/to/Wrong Sided Kit.adg"
+```
+
+## Setup in Ableton
+
+1. Run the script to generate `.adg` files
+2. In Ableton Live, go to **Places** > **Add Folder**
+3. Select the output folder (e.g. `D:\NI Drum Racks`)
+4. Browse your NI Expansion kits as Drum Rack presets with preview
+
+## How It Works
+
+1. **Parse `.mxgrp`**: Extracts pad-to-sample mappings from Maschine's binary kit files
+2. **Template-based generation**: Uses a real Ableton `.adg` file (Wrong Sided Kit from Drum Essentials) as a structural template
+3. **String replacement**: Replaces sample paths in the template while preserving the exact XML structure Ableton expects
+4. **WAV analysis**: Reads WAV headers to set correct sample boundaries per pad
+5. **Preview**: Copies NI's existing `.ogg` preview files into Ableton's `Ableton Folder Info/Previews/` structure
+
+## NI Library Structure
+
+```
+D:\Native Instruments Library\
+  Amplified Funk\
+    Groups\Kits\
+      3onIt_Kit.mxgrp
+      .previews\3onIt_Kit.mxgrp.ogg
+    Samples\Drums\Kick\Kick 3onIt 1.wav
+  Aquarius Earth\
+    ...
+```
+
+## Output Structure
+
+```
+D:\NI Drum Racks\
+  Amplified Funk\
+    3onIt_Kit.adg
+  Aquarius Earth\
+    Baby Mayka Kit.adg
+  Ableton Folder Info\
+    Properties.cfg
+    Previews\
+      Amplified Funk\
+        3onIt_Kit.adg.ogg
+      Aquarius Earth\
+        Baby Mayka Kit.adg.ogg
+```
+
+## Limitations
+
+- Maximum 16 pads per kit (Ableton Drum Rack limit from template)
+- Maschine effects (Filter, Reverb, Delay, EQ, Compressor) are not converted
+- Requires Drum Essentials Pack as template source
+- Synth-based pads (no .wav sample) are skipped
+
+## Technical Notes
+
+### .mxgrp Format
+Binary file containing UTF-16LE encoded sample paths. The parser extracts paths by searching for `.wav` byte sequences and reading surrounding ASCII characters.
+
+### .adg Format
+Gzip-compressed XML following Ableton Live 12's `GroupDevicePreset` schema (`MajorVersion="5"`, `SchemaChangeCount="6"`). Key structure:
+- `GroupDevicePreset` > `InstrumentGroupDevice` > `DrumGroupDevice` > `BranchPresets` > `DrumBranchPreset` (per pad)
+- Each pad contains an `OriginalSimpler` device with `MultiSamplePart` referencing the WAV file
+
+### Why Template-Based?
+Direct XML generation fails because Ableton requires the exact structure of a real preset file, including hundreds of default parameters per pad (~1,500 lines each). String replacement on a known-good template preserves this structure perfectly.
