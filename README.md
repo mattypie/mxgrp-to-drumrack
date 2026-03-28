@@ -99,3 +99,11 @@ Gzip-compressed XML following Ableton Live 12's `GroupDevicePreset` schema (`Maj
 
 ### Why Template-Based?
 Direct XML generation fails because Ableton requires the exact structure of a real preset file, including hundreds of default parameters per pad (~1,500 lines each). String replacement on a known-good template preserves this structure perfectly.
+
+## License
+
+MIT
+
+---
+
+If you find this tool useful, consider [supporting the project](https://buymeacoffee.com/embercore.jp).
